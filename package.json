@@ -1,0 +1,16 @@
+{
+  "name": "real-estate-finder",
+  "version": "1.0.0",
+  "description": "PropFinder — Buscador de inversiones inmobiliarias PA/NJ",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.9"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}

@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PropFinder — Buscador de Inversiones</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2333;
+    --border: #1e2d42;
+    --gold: #c9a84c;
+    --gold-light: #e8c878;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --text: #e8eaf0;
+    --text-muted: #6b7a99;
+    --text-dim: #3d4f6e;
+    --accent: #3b82f6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(59,130,246,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    padding: 28px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 32px;
+  }
+
+  .stat-pill {
+    text-align: right;
+  }
+
+  .stat-pill .val {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gold);
+    font-family: 'DM Serif Display', serif;
+  }
+
+  .stat-pill .lbl {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* SEARCH PANEL */
+  .search-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+  }
+
+  .panel-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px;
+    color: var(--gold);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .filter-group label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .filter-group input,
+  .filter-group select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .filter-group input:focus,
+  .filter-group select:focus {
+    border-color: var(--gold);
+  }
+
+  .filter-group select option { background: var(--surface2); }
+
+  .zip-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .zip-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .zip-tag:hover, .zip-tag.active {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+
+  .search-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .btn-search {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: #0a0f1e;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 32px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-search:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(201,168,76,0.3); }
+  .btn-search:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--text-muted); color: var(--text); }
+
+  .search-note {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  /* CALCULATOR */
+  .calc-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 32px;
+    margin-bottom: 32px;
+  }
+
+  .calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    align-items: end;
+  }
+
+  .calc-result {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+  }
+
+  .calc-result.positive { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.05); }
+  .calc-result.negative { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.05); }
+
+  .calc-result .result-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .calc-result .result-val { font-size: 26px; font-family: 'DM Serif Display', serif; }
+  .calc-result.positive .result-val { color: var(--green); }
+  .calc-result.negative .result-val { color: var(--red); }
+
+  /* RESULTS */
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .results-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text);
+  }
+
+  .results-count {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .sort-bar {
+    display: flex;
+    gap: 8px;
+  }
+
+  .sort-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .sort-btn.active, .sort-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* PROPERTY CARDS */
+  .properties-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 20px;
+  }
+
+  .property-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .property-card:hover {
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 40px;
+    position: relative;
+  }
+
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 6px;
+  }
+
+  .badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .badge-type { background: rgba(10,15,30,0.85); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+  .badge-new { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .badge-reduced { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+  .cash-flow-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(10,15,30,0.9);
+    border-radius: 8px;
+    padding: 6px 12px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+
+  .cash-flow-badge.positive { border-color: rgba(34,197,94,0.4); }
+  .cash-flow-badge.negative { border-color: rgba(239,68,68,0.4); }
+  .cash-flow-badge .cf-val { font-size: 15px; font-weight: 700; font-family: 'DM Serif Display', serif; }
+  .cash-flow-badge.positive .cf-val { color: var(--green); }
+  .cash-flow-badge.negative .cf-val { color: var(--red); }
+  .cash-flow-badge .cf-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .card-body { padding: 18px 20px; }
+
+  .card-price {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .card-address {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-specs {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+
+  .spec {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .spec-icon { font-size: 14px; }
+
+  .card-financials {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .fin-item .fin-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
+  .fin-item .fin-val { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+  .fin-item .fin-val.highlight { color: var(--gold); }
+
+  .card-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .days-on-market { font-size: 12px; color: var(--text-dim); }
+  .days-on-market span { color: var(--text-muted); }
+
+  .card-actions { display: flex; gap: 8px; }
+
+  .btn-icon {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .btn-icon:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-icon.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1); }
+
+  .btn-view {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-view:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* LOADING */
+  .loading-state {
+    text-align: center;
+    padding: 80px 20px;
+    display: none;
+  }
+
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--text-muted);
+  }
+
+  .loading-sub { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+  .empty-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text-muted); margin-bottom: 8px; }
+  .empty-sub { font-size: 14px; color: var(--text-dim); }
+
+  /* ALERT BANNER */
+  .alert-banner {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .alert-banner .alert-icon { font-size: 18px; }
+
+  /* ERROR */
+  .error-banner {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: #f87171;
+    display: none;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .modal-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; }
+  .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px; padding: 4px; }
+  .modal-close:hover { color: var(--text); }
+
+  .modal-body { padding: 24px 28px; }
+
+  .modal-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+
+  .modal-detail-row:last-child { border-bottom: none; }
+  .modal-detail-row .d-label { color: var(--text-muted); }
+  .modal-detail-row .d-val { color: var(--text); font-weight: 500; }
+  .modal-detail-row .d-val.good { color: var(--green); }
+  .modal-detail-row .d-val.bad { color: var(--red); }
+
+  .modal-actions {
+    padding: 20px 28px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn-zillow {
+    flex: 1;
+    background: linear-gradient(135deg, #006AFF, #0055CC);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-zillow:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .header-stats { display: none; }
+    .calc-grid { grid-template-columns: 1fr; }
+    .properties-grid { grid-template-columns: 1fr; }
+    .filters-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 480px) {
+    .filters-grid { grid-template-columns: 1fr; }
+  }
+
+  /* NO HOA BADGE */
+  .no-hoa-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 10px;
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .score-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .score-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">🏘️</div>
+        <div>
+          <div class="logo-text">PropFinder</div>
+          <div class="logo-sub">Inversiones · PA / NJ</div>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="stat-pill">
+          <div class="val" id="stat-found">—</div>
+          <div class="lbl">Encontradas</div>
+        </div>
+        <div class="stat-pill">
+          <div class="val" id="stat-positive">—</div>
+          <div class="lbl">Cash Flow +</div>
+        </div>
+        <div class="stat-pill">
+          <div class="val" id="stat-best">—</div>
+          <div class="lbl">Mejor Flujo</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- SEARCH PANEL -->
+  <div class="search-panel">
+    <div class="panel-title">🔍 Parámetros de Búsqueda</div>
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label>Tipo de Propiedad</label>
+        <select id="prop-type">
+          <option value="multi_family">Duplex / Triplex / Multi</option>
+          <option value="duplex">Solo Duplex</option>
+          <option value="triplex">Solo Triplex</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Precio Mínimo</label>
+        <input type="number" id="price-min" value="200000" step="10000">
+      </div>
+      <div class="filter-group">
+        <label>Precio Máximo</label>
+        <input type="number" id="price-max" value="450000" step="10000">
+      </div>
+      <div class="filter-group">
+        <label>Habitaciones Mín.</label>
+        <select id="beds-min">
+          <option value="2">2+</option>
+          <option value="3" selected>3+</option>
+          <option value="4">4+</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-group" style="margin-bottom:20px">
+      <label>Zonas (ZIP Codes — click para activar)</label>
+      <div class="zip-tags" id="zip-tags">
+        <div class="zip-tag active" data-zip="19446">Lansdale 19446</div>
+        <div class="zip-tag active" data-zip="19454">North Wales 19454</div>
+        <div class="zip-tag active" data-zip="19440">Hatfield 19440</div>
+        <div class="zip-tag active" data-zip="18101">Allentown 18101</div>
+        <div class="zip-tag active" data-zip="18102">Allentown 18102</div>
+        <div class="zip-tag active" data-zip="18015">Bethlehem 18015</div>
+        <div class="zip-tag" data-zip="19401">Norristown 19401</div>
+        <div class="zip-tag" data-zip="19462">Plymouth Meeting 19462</div>
+      </div>
+    </div>
+    <div class="search-actions">
+      <button class="btn-search" id="btn-search" onclick="searchProperties()">Buscar Propiedades</button>
+      <button class="btn-secondary" onclick="resetFilters()">Limpiar</button>
+      <span class="search-note">Sin HOA • Radio ~1hr desde Warminster</span>
+    </div>
+  </div>
+
+  <!-- CALCULATOR -->
+  <div class="calc-panel">
+    <div class="panel-title">💰 Calculadora de Cash Flow</div>
+    <div class="calc-grid">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="filter-group">
+          <label>Down Payment %</label>
+          <input type="number" id="calc-down" value="20" min="5" max="50" onchange="updateCalc()">
+        </div>
+        <div class="filter-group">
+          <label>Tasa Interés %</label>
+          <input type="number" id="calc-rate" value="7.0" min="3" max="12" step="0.1" onchange="updateCalc()">
+        </div>
+        <div class="filter-group">
+          <label>Renta Unidad A ($)</label>
+          <input type="number" id="calc-rent-a" value="1400" step="50" onchange="updateCalc()">
+        </div>
+        <div class="filter-group">
+          <label>Renta Unidad B ($)</label>
+          <input type="number" id="calc-rent-b" value="1400" step="50" onchange="updateCalc()">
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="filter-group">
+          <label>Precio Propiedad ($)</label>
+          <input type="number" id="calc-price" value="300000" step="5000" onchange="updateCalc()">
+        </div>
+        <div class="filter-group">
+          <label>Taxes Anuales ($)</label>
+          <input type="number" id="calc-taxes" value="4500" step="100" onchange="updateCalc()">
+        </div>
+        <div class="filter-group">
+          <label>Seguro Mensual ($)</label>
+          <input type="number" id="calc-insurance" value="175" step="25" onchange="updateCalc()">
+        </div>
+        <div class="filter-group">
+          <label>Unidades</label>
+          <select id="calc-units" onchange="toggleUnit()">
+            <option value="2">Duplex (2)</option>
+            <option value="3">Triplex (3)</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="calc-result" id="calc-mortgage-box">
+          <div class="result-label">Hipoteca / mes</div>
+          <div class="result-val" id="calc-mortgage">$—</div>
+        </div>
+        <div class="calc-result" id="calc-cashflow-box">
+          <div class="result-label">Cash Flow Neto</div>
+          <div class="result-val" id="calc-cashflow">$—</div>
+        </div>
+        <div class="calc-result">
+          <div class="result-label">Cap Rate</div>
+          <div class="result-val" id="calc-caprate" style="color:var(--gold)">—%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-banner" id="error-banner">
+    <span>⚠️</span>
+    <span id="error-msg">Error al conectar con la API.</span>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results-section" style="display:none">
+    <div class="results-header">
+      <div>
+        <div class="results-title">Propiedades Encontradas</div>
+        <div class="results-count" id="results-count"></div>
+      </div>
+      <div class="sort-bar">
+        <button class="sort-btn active" onclick="sortResults('cashflow', this)">Mayor Cash Flow</button>
+        <button class="sort-btn" onclick="sortResults('price', this)">Menor Precio</button>
+        <button class="sort-btn" onclick="sortResults('new', this)">Más Recientes</button>
+      </div>
+    </div>
+    <div class="properties-grid" id="properties-grid"></div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-state" id="loading-state">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Buscando propiedades...</div>
+    <div class="loading-sub">Consultando Zillow · Calculando cash flow · Filtrando HOA</div>
+  </div>
+
+  <!-- EMPTY -->
+  <div class="empty-state" id="empty-state">
+    <div class="empty-icon">🏘️</div>
+    <div class="empty-title">Listo para buscar</div>
+    <div class="empty-sub">Seleccioná los parámetros y hacé click en Buscar</div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Detalle</div>
+      <button class="modal-close" onclick="closeModalBtn()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn-zillow" id="modal-zillow-btn" onclick="openZillow()">Ver en Zillow →</button>
+      <button class="btn-secondary" onclick="closeModalBtn()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================
+// STATE
+// =====================
+let allProperties = [];
+let favorites = JSON.parse(localStorage.getItem('propfinder-favs') || '[]');
+let currentProperty = null;
+
+// =====================
+// ZIP TAG TOGGLE
+// =====================
+document.querySelectorAll('.zip-tag').forEach(tag => {
+  tag.addEventListener('click', () => tag.classList.toggle('active'));
+});
+
+function getActiveZips() {
+  return [...document.querySelectorAll('.zip-tag.active')].map(t => t.dataset.zip);
+}
+
+// =====================
+// CALCULATOR
+// =====================
+function updateCalc(price = null) {
+  const p = price || parseFloat(document.getElementById('calc-price').value) || 300000;
+  const downPct = parseFloat(document.getElementById('calc-down').value) / 100;
+  const rate = parseFloat(document.getElementById('calc-rate').value) / 100 / 12;
+  const taxes = parseFloat(document.getElementById('calc-taxes').value) / 12;
+  const insurance = parseFloat(document.getElementById('calc-insurance').value);
+  const rentA = parseFloat(document.getElementById('calc-rent-a').value) || 0;
+  const rentB = parseFloat(document.getElementById('calc-rent-b').value) || 0;
+  const units = parseInt(document.getElementById('calc-units').value);
+  const rentC = units === 3 ? (rentB * 0.9) : 0;
+
+  const loan = p * (1 - downPct);
+  const n = 360;
+  const mortgage = rate === 0 ? loan/n : loan * (rate * Math.pow(1+rate,n)) / (Math.pow(1+rate,n)-1);
+  const maintenance = p * 0.01 / 12;
+  const totalRent = rentA + rentB + rentC;
+  const vacancy = totalRent * 0.08;
+  const totalExpenses = mortgage + taxes + insurance + maintenance + vacancy;
+  const cashflow = totalRent - totalExpenses;
+  const noi = totalRent * 12 - (taxes * 12) - (insurance * 12) - maintenance * 12 - vacancy * 12;
+  const capRate = (noi / p) * 100;
+
+  document.getElementById('calc-mortgage').textContent = '$' + Math.round(mortgage).toLocaleString();
+  document.getElementById('calc-cashflow').textContent = (cashflow >= 0 ? '+' : '') + '$' + Math.round(cashflow).toLocaleString();
+  document.getElementById('calc-caprate').textContent = capRate.toFixed(1) + '%';
+
+  const box = document.getElementById('calc-cashflow-box');
+  box.className = 'calc-result ' + (cashflow >= 0 ? 'positive' : 'negative');
+
+  return { mortgage, cashflow, capRate, totalRent, totalExpenses };
+}
+
+function toggleUnit() {
+  const units = parseInt(document.getElementById('calc-units').value);
+  // Show/hide unit C logic could go here
+  updateCalc();
+}
+
+// Init calculator
+updateCalc();
+
+// =====================
+// CALCULATE CASHFLOW FOR A PROPERTY
+// =====================
+function calcPropertyCashflow(price, rentEstimate, taxes) {
+  const downPct = parseFloat(document.getElementById('calc-down').value) / 100;
+  const rate = parseFloat(document.getElementById('calc-rate').value) / 100 / 12;
+  const insurance = parseFloat(document.getElementById('calc-insurance').value);
+  const taxMonthly = (taxes || price * 0.015) / 12;
+
+  const loan = price * (1 - downPct);
+  const n = 360;
+  const mortgage = rate === 0 ? loan/n : loan * (rate * Math.pow(1+rate,n)) / (Math.pow(1+rate,n)-1);
+  const maintenance = price * 0.01 / 12;
+  const vacancy = rentEstimate * 0.08;
+  const totalExpenses = mortgage + taxMonthly + insurance + maintenance + vacancy;
+  const cashflow = rentEstimate - totalExpenses;
+  const noi = rentEstimate * 12 - taxMonthly * 12 - insurance * 12 - maintenance * 12 - vacancy * 12;
+  const capRate = (noi / price) * 100;
+  const downPayment = price * downPct;
+
+  return { mortgage: Math.round(mortgage), cashflow: Math.round(cashflow), capRate: capRate.toFixed(1), downPayment: Math.round(downPayment) };
+}
+
+// =====================
+// SEARCH
+// =====================
+async function searchProperties() {
+  const zips = getActiveZips();
+  if (!zips.length) { alert('Seleccioná al menos una zona'); return; }
+
+  const btn = document.getElementById('btn-search');
+  btn.disabled = true;
+  btn.textContent = 'Buscando...';
+
+  showLoading();
+  hideError();
+
+  try {
+    const priceMin = document.getElementById('price-min').value;
+    const priceMax = document.getElementById('price-max').value;
+    const bedsMin = document.getElementById('beds-min').value;
+
+    let allResults = [];
+
+    for (const zip of zips.slice(0, 4)) { // max 4 ZIPs para no agotar requests
+      try {
+        const res = await fetch(`/api/search?zip=${zip}&priceMin=${priceMin}&priceMax=${priceMax}&beds=${bedsMin}`);
+        const data = await res.json();
+        if (data.properties) allResults = allResults.concat(data.properties);
+      } catch(e) {
+        console.warn('ZIP failed:', zip, e);
+      }
+    }
+
+    // Deduplicate by zpid
+    const seen = new Set();
+    allResults = allResults.filter(p => {
+      if (seen.has(p.zpid)) return false;
+      seen.add(p.zpid);
+      return true;
+    });
+
+    allProperties = allResults;
+    renderProperties(allProperties);
+    updateStats();
+
+  } catch (err) {
+    showError('Error al buscar: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Buscar Propiedades';
+  }
+}
+
+// =====================
+// RENDER
+// =====================
+function renderProperties(props) {
+  const grid = document.getElementById('properties-grid');
+  const loading = document.getElementById('loading-state');
+  const empty = document.getElementById('empty-state');
+  const section = document.getElementById('results-section');
+
+  loading.style.display = 'none';
+
+  if (!props.length) {
+    section.style.display = 'none';
+    empty.style.display = 'block';
+    empty.querySelector('.empty-title').textContent = 'Sin resultados';
+    empty.querySelector('.empty-sub').textContent = 'Intentá ampliar la zona o el rango de precio';
+    return;
+  }
+
+  empty.style.display = 'none';
+  section.style.display = 'block';
+  document.getElementById('results-count').textContent = props.length + ' propiedades encontradas';
+
+  grid.innerHTML = props.map((p, i) => renderCard(p, i)).join('');
+}
+
+function renderCard(p, i) {
+  const cf = calcPropertyCashflow(p.price, p.rentZestimate || estimateRent(p), p.taxAnnual);
+  const isFav = favorites.includes(p.zpid);
+  const isNew = p.daysOnMarket <= 7;
+  const isReduced = p.priceReduction > 0;
+
+  return `
+  <div class="property-card" style="animation-delay:${i * 0.05}s" onclick="openModal('${p.zpid}')">
+    <div class="card-image">
+      ${p.imgSrc ? `<img src="${p.imgSrc}" alt="propiedad" onerror="this.parentElement.innerHTML='🏘️'">` : '🏘️'}
+      <div class="card-badges">
+        <span class="badge badge-type">${p.propertyType || 'Multi'}</span>
+        ${isNew ? '<span class="badge badge-new">Nuevo</span>' : ''}
+        ${isReduced ? '<span class="badge badge-reduced">↓ Precio</span>' : ''}
+      </div>
+      <div class="cash-flow-badge ${cf.cashflow >= 0 ? 'positive' : 'negative'}">
+        <div class="cf-val">${cf.cashflow >= 0 ? '+' : ''}$${Math.abs(cf.cashflow).toLocaleString()}</div>
+        <div class="cf-label">/ mes</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-price">$${p.price.toLocaleString()}</div>
+      <div class="card-address">📍 ${p.address}</div>
+      <div class="card-specs">
+        <span class="spec"><span class="spec-icon">🛏</span>${p.beds} hab</span>
+        <span class="spec"><span class="spec-icon">🚿</span>${p.baths} baños</span>
+        <span class="spec"><span class="spec-icon">📐</span>${p.sqft ? p.sqft.toLocaleString() + ' ft²' : 'N/D'}</span>
+        ${!p.hasHoa ? '<span class="no-hoa-tag">✓ Sin HOA</span>' : ''}
+      </div>
+      <div class="card-financials">
+        <div class="fin-item">
+          <div class="fin-label">Down Pay.</div>
+          <div class="fin-val highlight">$${(cf.downPayment/1000).toFixed(0)}k</div>
+        </div>
+        <div class="fin-item">
+          <div class="fin-label">Hipoteca</div>
+          <div class="fin-val">$${cf.mortgage.toLocaleString()}</div>
+        </div>
+        <div class="fin-item">
+          <div class="fin-label">Cap Rate</div>
+          <div class="fin-val highlight">${cf.capRate}%</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <div class="days-on-market">En mercado: <span>${p.daysOnMarket || 0} días</span></div>
+      <div class="card-actions">
+        <button class="btn-icon ${isFav ? 'active' : ''}" onclick="toggleFav(event,'${p.zpid}')">${isFav ? '⭐' : '☆'}</button>
+        <button class="btn-view" onclick="event.stopPropagation(); window.open('${p.detailUrl || 'https://zillow.com'}','_blank')">Zillow →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function estimateRent(p) {
+  // Rough estimate based on price and beds if no zestimate
+  const base = p.beds >= 3 ? 1600 : 1200;
+  return base * (p.price / 300000) * 0.9;
+}
+
+// =====================
+// STATS
+// =====================
+function updateStats() {
+  document.getElementById('stat-found').textContent = allProperties.length;
+  const positives = allProperties.filter(p => {
+    const cf = calcPropertyCashflow(p.price, p.rentZestimate || estimateRent(p), p.taxAnnual);
+    return cf.cashflow >= 500;
+  });
+  document.getElementById('stat-positive').textContent = positives.length;
+  if (positives.length) {
+    const best = Math.max(...positives.map(p => {
+      const cf = calcPropertyCashflow(p.price, p.rentZestimate || estimateRent(p), p.taxAnnual);
+      return cf.cashflow;
+    }));
+    document.getElementById('stat-best').textContent = '+$' + best.toLocaleString();
+  } else {
+    document.getElementById('stat-best').textContent = '—';
+  }
+}
+
+// =====================
+// SORT
+// =====================
+function sortResults(by, btn) {
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const sorted = [...allProperties];
+  if (by === 'cashflow') {
+    sorted.sort((a, b) => {
+      const cfA = calcPropertyCashflow(a.price, a.rentZestimate || estimateRent(a), a.taxAnnual).cashflow;
+      const cfB = calcPropertyCashflow(b.price, b.rentZestimate || estimateRent(b), b.taxAnnual).cashflow;
+      return cfB - cfA;
+    });
+  } else if (by === 'price') {
+    sorted.sort((a, b) => a.price - b.price);
+  } else if (by === 'new') {
+    sorted.sort((a, b) => (a.daysOnMarket || 0) - (b.daysOnMarket || 0));
+  }
+  renderProperties(sorted);
+}
+
+// =====================
+// FAVORITES
+// =====================
+function toggleFav(e, zpid) {
+  e.stopPropagation();
+  const idx = favorites.indexOf(zpid);
+  if (idx === -1) favorites.push(zpid);
+  else favorites.splice(idx, 1);
+  localStorage.setItem('propfinder-favs', JSON.stringify(favorites));
+  // Re-render just that card's button
+  document.querySelectorAll('.btn-icon').forEach(btn => {
+    // Just re-render all for simplicity
+  });
+}
+
+// =====================
+// MODAL
+// =====================
+function openModal(zpid) {
+  const p = allProperties.find(x => x.zpid == zpid);
+  if (!p) return;
+  currentProperty = p;
+
+  const cf = calcPropertyCashflow(p.price, p.rentZestimate || estimateRent(p), p.taxAnnual);
+  const rent = p.rentZestimate || Math.round(estimateRent(p));
+
+  document.getElementById('modal-title').textContent = p.address;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-detail-row"><span class="d-label">Precio de lista</span><span class="d-val">$${p.price.toLocaleString()}</span></div>
+    <div class="modal-detail-row"><span class="d-label">Down Payment (20%)</span><span class="d-val">$${cf.downPayment.toLocaleString()}</span></div>
+    <div class="modal-detail-row"><span class="d-label">Hipoteca mensual</span><span class="d-val">$${cf.mortgage.toLocaleString()}</span></div>
+    <div class="modal-detail-row"><span class="d-label">Renta estimada total</span><span class="d-val good">$${rent.toLocaleString()}/mes</span></div>
+    <div class="modal-detail-row"><span class="d-label">Cash Flow Neto</span><span class="d-val ${cf.cashflow >= 500 ? 'good' : cf.cashflow >= 0 ? '' : 'bad'}">${cf.cashflow >= 0 ? '+' : ''}$${cf.cashflow.toLocaleString()}/mes</span></div>
+    <div class="modal-detail-row"><span class="d-label">Cap Rate</span><span class="d-val">${cf.capRate}%</span></div>
+    <div class="modal-detail-row"><span class="d-label">Habitaciones / Baños</span><span class="d-val">${p.beds} hab · ${p.baths} baños</span></div>
+    <div class="modal-detail-row"><span class="d-label">Superficie</span><span class="d-val">${p.sqft ? p.sqft.toLocaleString() + ' ft²' : 'N/D'}</span></div>
+    <div class="modal-detail-row"><span class="d-label">Días en mercado</span><span class="d-val">${p.daysOnMarket || 0} días</span></div>
+    <div class="modal-detail-row"><span class="d-label">HOA</span><span class="d-val ${!p.hasHoa ? 'good' : 'bad'}">${p.hasHoa ? 'Sí - $' + p.hoaFee + '/mes' : '✓ Sin HOA'}</span></div>
+    ${p.priceReduction ? `<div class="modal-detail-row"><span class="d-label">Reducción de precio</span><span class="d-val good">-$${p.priceReduction.toLocaleString()}</span></div>` : ''}
+    ${p.taxAnnual ? `<div class="modal-detail-row"><span class="d-label">Impuestos anuales</span><span class="d-val">$${p.taxAnnual.toLocaleString()}</span></div>` : ''}
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function openZillow() {
+  if (currentProperty?.detailUrl) window.open(currentProperty.detailUrl, '_blank');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModalBtn();
+}
+
+function closeModalBtn() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// =====================
+// UI HELPERS
+// =====================
+function showLoading() {
+  document.getElementById('loading-state').style.display = 'block';
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('results-section').style.display = 'none';
+}
+
+function hideError() {
+  document.getElementById('error-banner').style.display = 'none';
+}
+
+function showError(msg) {
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'block';
+  const banner = document.getElementById('error-banner');
+  banner.style.display = 'flex';
+  document.getElementById('error-msg').textContent = msg;
+}
+
+function resetFilters() {
+  document.getElementById('price-min').value = 200000;
+  document.getElementById('price-max').value = 450000;
+  document.getElementById('beds-min').value = 3;
+  document.getElementById('prop-type').value = 'multi_family';
+  document.querySelectorAll('.zip-tag').forEach(t => {
+    t.classList.toggle('active', ['19446','19454','19440','18101','18102','18015'].includes(t.dataset.zip));
+  });
+}
+</script>
+</body>
+</html>

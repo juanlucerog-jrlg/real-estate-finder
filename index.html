@@ -976,7 +976,7 @@ async function searchProperties() {
 
     for (const zip of zips.slice(0, 4)) { // max 4 ZIPs para no agotar requests
       try {
-        const res = await fetch(`/api/search?zip=${zip}&priceMin=${priceMin}&priceMax=${priceMax}&beds=${bedsMin}`);
+        const res = await fetch(`https://real-estate-api-hcwl.onrender.com/api/search?zip=${zip}&priceMin=${priceMin}&priceMax=${priceMax}&beds=${bedsMin}`);
         const data = await res.json();
         if (data.properties) allResults = allResults.concat(data.properties);
       } catch(e) {
